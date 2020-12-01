@@ -33,9 +33,16 @@ int main() {
         }
 
         child_pid = fork();     /* Create a child process */
+        if (child_pid < 0) {
+            perror("Fork failed");
+            exit(1);
+        }
 
         if (child_pid == 0) {       /* Execute the command in the child process */
-            execvp(command[0], command);
+            if (execvp(command[0], command) < 0) {
+                perror(command[0]);
+                exit(1);
+            }
 
         } else {       /* While the parent waits for the command to complete */
             waitpid(child_pid, &stat_loc, WUNTRACED);
@@ -52,6 +59,10 @@ char **parse_input(char *input) {
     /* Static memory allocation:
      Currently our command buffer allocates 8 blocks only, meaning it can properly parse an eight words size input */
     char **command = malloc(8 * sizeof(char *));
+    if (command == NULL) {
+        perror("malloc failed");
+        exit(1);
+    }
 
     char *separator = " ";
     char *parsed;
