@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 char **parse_input(char *);
+int cd(char *);
 
 int main() {
     char *input;
@@ -20,6 +21,14 @@ int main() {
         if (!command[0]) {      /* Handle empty commands */
             free(input);
             free(command);
+            continue;
+        }
+
+        if (strcmp(command[0], "cd") == 0) {
+            if (cd(command[1]) < 0) {
+                perror(command[1]);
+            }
+
             continue;
         }
 
@@ -58,4 +67,8 @@ char **parse_input(char *input) {
 
     command[index] = NULL;
     return command;
+}
+
+int cd(char *path) {
+    return chdir(path);
 }
