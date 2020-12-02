@@ -27,6 +27,10 @@ int main() {
             continue;
         }
 
+        if (strcmp(command[0], "exit") == 0) {
+            exit(0);
+        }
+
         if (strcmp(command[0], "cd") == 0) {
             if (cd(command[1]) < 0) {
                 perror(command[1]);
