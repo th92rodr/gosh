@@ -19,6 +19,12 @@ int main() {
 
     while (1) {
         input = readline("unixsh> ");
+
+        if (input == NULL) {  /* Exit on Ctrl-D */
+            printf("\n");
+            exit(0);
+        }
+
         command = parse_input(input);
 
         if (!command[0]) {      /* Handle empty commands */
@@ -28,6 +34,7 @@ int main() {
         }
 
         if (strcmp(command[0], "exit") == 0) {
+            printf("\n");
             exit(0);
         }
 
