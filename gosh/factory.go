@@ -10,28 +10,33 @@ import (
 )
 
 type terminal struct {
-	reader       *bufio.Reader
 	supported    bool
 	originalMode syscall.Termios
-	next         <-chan nexter
+
+	reader       *bufio.Reader
+	nextInput	<-chan input
 	winch        chan os.Signal
-	pending      []rune
-	history      []string
 	columns      int
+
+	history      stack
 	currentLine
 }
 
 type currentLine struct {
 	line     []rune
 	position int
-	columns  int
+
+	pendingEsc []rune
+	escIsOn bool
+
+	needRefresh bool
 
 	historyPosition int
 	historyEnd      string
 }
 
-type nexter struct {
-	r   rune
+type input struct {
+	char   rune
 	err error
 }
 
@@ -65,7 +70,7 @@ func (t *terminal) createWinchChannel() {
 	t.winch = winch
 }
 
-func (t *terminal) Close() {
+func (t *terminal) close() {
 	if t.supported {
 		syscall.Syscall(syscall.SYS_IOCTL, uintptr(syscall.Stdin), syscall.TCSETS, uintptr(unsafe.Pointer(&t.originalMode)))
 	}
