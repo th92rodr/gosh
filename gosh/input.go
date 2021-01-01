@@ -55,6 +55,10 @@ mainLoop:
 
 		case <-timeout:
 			break mainLoop
+
+		case <-t.winch:
+			t.getColumns()
+			break mainLoop
 		}
 	}
 
@@ -65,6 +69,7 @@ mainLoop:
 	}
 
 	if len(t.line) > 0 {
+		t.push(string(t.line))
 		return string(t.line), nil
 	}
 
@@ -106,6 +111,11 @@ func (t *terminal) executeEscapeKey() bool {
 				t.left()
 			case "delete":
 				t.delete()
+
+			case "up":
+				t.up()
+			case "down":
+				t.down()
 			}
 
 			if t.needRefresh {

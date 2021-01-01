@@ -45,6 +45,8 @@ func New() *terminal {
 	terminal.reader = bufio.NewReader(os.Stdin)
 	terminal.supported = isTerminalSupported()
 
+	terminal.newStack()
+
 	if terminal.supported {
 		syscall.Syscall(syscall.SYS_IOCTL, uintptr(syscall.Stdin), syscall.TCGETS, uintptr(unsafe.Pointer(&terminal.originalMode)))
 		mode := terminal.originalMode
