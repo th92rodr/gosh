@@ -2,26 +2,33 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
 func main() {
 	terminal := New()
-	defer terminal.Close()
+	defer terminal.close()
 
 	if !terminal.supported {
 		return
 	}
 
+	run(parseInput("clear"))
+
 	for {
-		if input, err := terminal.Prompt(); err == nil {
-			command := ParseInput(input)
-			if command[0] == "exit" {
-				break
-			}
-			Run(command)
-		} else {
+		input := terminal.prompt()
+
+		if terminal.eof {
 			break
 		}
+
+		command := parseInput(input)
+		if command[0] == "exit" {
+			break
+		}
+
+		run(command)
 	}
 
+	fmt.Fprintln(os.Stdout)
 }

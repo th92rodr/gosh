@@ -16,10 +16,13 @@ type terminal struct {
 	reader       *bufio.Reader
 	nextInput	<-chan input
 	winch        chan os.Signal
+	sigint		 chan os.Signal
 	columns      int
 
 	history      stack
 	currentLine
+
+	eof bool
 }
 
 type currentLine struct {
@@ -44,6 +47,7 @@ func New() *terminal {
 	var terminal terminal
 	terminal.reader = bufio.NewReader(os.Stdin)
 	terminal.supported = isTerminalSupported()
+	terminal.eof = false
 
 	terminal.newStack()
 
@@ -56,6 +60,8 @@ func New() *terminal {
 		syscall.Syscall(syscall.SYS_IOCTL, uintptr(syscall.Stdin), syscall.TCSETS, uintptr(unsafe.Pointer(&mode)))
 
 		terminal.createWinchChannel()
+
+		terminal.createSigIntChannel()
 	}
 
 	return &terminal
@@ -72,7 +78,16 @@ func (t *terminal) createWinchChannel() {
 	t.winch = winch
 }
 
+func (t *terminal) createSigIntChannel() {
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, syscall.SIGINT)
+	t.sigint = sigint
+}
+
 func (t *terminal) close() {
+	signal.Stop(t.winch)
+	signal.Stop(t.sigint)
+
 	if t.supported {
 		syscall.Syscall(syscall.SYS_IOCTL, uintptr(syscall.Stdin), syscall.TCSETS, uintptr(unsafe.Pointer(&t.originalMode)))
 	}
