@@ -7,7 +7,9 @@ import (
 	// "syscall"
 )
 
-func Run(command []string) {
+func run(command []string) {
+	fmt.Fprintln(os.Stdout)
+
 	if command[0] == "" { /* Handle empty commands */
 		return
 	}
@@ -80,6 +82,6 @@ func cd(path string) {
 }
 
 func exit() {
-	fmt.Fprintln(os.Stdout, "")
+	fmt.Fprintln(os.Stdout)
 	os.Exit(0)
 }

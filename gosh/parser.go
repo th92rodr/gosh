@@ -5,7 +5,7 @@ import (
 )
 
 // parse input and return in the following format [command, args...]
-func ParseInput(input string) []string {
+func parseInput(input string) []string {
 	// Remove the newline character.
 	input = strings.TrimSuffix(input, "\n")
 

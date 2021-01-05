@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (t *terminal) prompt() (string, error) {
+func (t *terminal) prompt() string {
 	fmt.Fprint(os.Stdout, promptText)
 
 	t.getColumns()
@@ -42,6 +42,12 @@ mainLoop:
 				// If nothing else arrives, it was an actual ESC key
 				timeout = time.After(50 * time.Millisecond)
 			} else {
+
+				if char == CTRL_A[0] || char == CTRL_B[0] || char == CTRL_D[0] || char == CTRL_E[0] || char == CTRL_F[0] || char == CTRL_H[0] || char == CTRL_K[0] || char == CTRL_L[0] || char == CTRL_N[0] || char == CTRL_P[0] || char == CTRL_T[0] || char == CTRL_U[0] || char == CTRL_W[0] || char == TAB[0] || char == LINE_FEED[0] || char == CARRIAGE_RETURN[0] || char == BACKSPACE[0] {
+					t.pendingEsc = append(t.pendingEsc, char)
+					break mainLoop
+				}
+
 				if t.position == len(t.line) && len(promptText)+len(t.line) < t.columns {
 					t.line = append(t.line, char)
 					fmt.Printf("%s", string(char))
@@ -59,21 +65,26 @@ mainLoop:
 		case <-t.winch:
 			t.getColumns()
 			break mainLoop
+
+		case <-t.sigint:
+			t.pendingEsc = append(t.pendingEsc, CTRL_C[0])
+			break mainLoop
 		}
 	}
 
 	if len(t.pendingEsc) > 0 {
-		if t.executeEscapeKey() {
+		t.executeEscapeKey()
+		if !t.eof {
 			goto mainLoop
 		}
 	}
 
 	if len(t.line) > 0 {
 		t.push(string(t.line))
-		return string(t.line), nil
+		return string(t.line)
 	}
 
-	return "", nil
+	return ""
 }
 
 func (t *terminal) startPrompt() {
@@ -97,7 +108,7 @@ func (t *terminal) startPrompt() {
 	t.nextInput = next
 }
 
-func (t *terminal) executeEscapeKey() bool {
+func (t *terminal) executeEscapeKey() {
 	for index, key := range keys {
 		if ok := isEqual(t.pendingEsc, key); ok {
 			switch keysArrayIndexMapsToKeyName[index] {
@@ -105,17 +116,43 @@ func (t *terminal) executeEscapeKey() bool {
 				t.home()
 			case "end", "ctrlE":
 				t.end()
-			case "right", "ctrlF":
-				t.right()
 			case "left", "ctrlB":
 				t.left()
+			case "right", "ctrlF":
+				t.right()
+			case "altB", "wordLeft":
+				t.wordLeft()
+			case "altF", "wordRight":
+				t.wordRight()
+
 			case "delete":
 				t.delete()
+			case "altD":
+				t.deleteNextWord()
+			case "altBackspace", "ctrlW":
+				t.eraseWord()
+			case "ctrlU":
+				t.ctrlU()
+			case "ctrlK":
+				t.ctrlK()
+			case "ctrlH", "backspace":
+				t.ctrlH()
 
-			case "up":
+			case "up", "ctrlP":
 				t.up()
-			case "down":
+			case "down", "ctrlN":
 				t.down()
+
+			case "ctrlT":
+				t.ctrlT()
+			case "ctrlL":
+				t.ctrlL()
+			case "ctrlD":
+				t.ctrlD()
+			case "ctrlC":
+				t.ctrlC()
+
+			case "tab":
 			}
 
 			if t.needRefresh {
@@ -124,12 +161,12 @@ func (t *terminal) executeEscapeKey() bool {
 
 			t.pendingEsc = t.pendingEsc[:0]
 			t.escIsOn = false
-
-			return true
+			return
 		}
 	}
 
-	return false
+	t.pendingEsc = t.pendingEsc[:0]
+	t.escIsOn = false
 }
 
 func isEqual(a, b []rune) bool {
