@@ -92,3 +92,7 @@ func (t *terminal) eraseLine() {
 func (t *terminal) eraseScreen() {
 	fmt.Print("\x1b[H\x1b[2J")
 }
+
+func doBeep() {
+	fmt.Print(beep)
+}
