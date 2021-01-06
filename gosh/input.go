@@ -169,17 +169,3 @@ func (t *terminal) executeEscapeKey() {
 	t.pendingEsc = t.pendingEsc[:0]
 	t.escIsOn = false
 }
-
-func isEqual(a, b []rune) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-
-	return true
-}
