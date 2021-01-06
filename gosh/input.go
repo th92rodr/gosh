@@ -153,6 +153,7 @@ func (t *terminal) executeEscapeKey() {
 				t.ctrlC()
 
 			case "tab":
+				t.tabCompleter()
 			}
 
 			if t.needRefresh {
