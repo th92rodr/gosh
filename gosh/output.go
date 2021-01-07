@@ -94,5 +94,5 @@ func (t *terminal) eraseScreen() {
 }
 
 func doBeep() {
-	fmt.Print(beep)
+	fmt.Fprint(os.Stdout, beep)
 }

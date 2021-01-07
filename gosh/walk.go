@@ -87,15 +87,15 @@ func (t *terminal) walk(directory string, wordToComplete string) {
 
 	// If there is a lot of results show them on the screen
 	if len(files) > 1 {
-		fmt.Println("")
+		fmt.Fprintln(os.Stdout)
 		for _, file := range files {
 			if file.info.IsDir() {
-				fmt.Print(file.name, "/ ")
+				fmt.Fprint(os.Stdout, file.name, "/ ")
 			} else {
-				fmt.Print(file.name, " ")
+				fmt.Fprint(os.Stdout, file.name, " ")
 			}
 		}
-		fmt.Println("")
+		fmt.Fprintln(os.Stdout)
 	}
 
 	// If there is only one result, add it to the prompt line
