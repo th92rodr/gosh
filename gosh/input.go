@@ -50,7 +50,7 @@ mainLoop:
 
 				if t.position == len(t.line) && len(promptText)+len(t.line) < t.columns {
 					t.line = append(t.line, char)
-					fmt.Printf("%s", string(char))
+					fmt.Fprintf(os.Stdout, "%s", string(char))
 					t.position++
 				} else {
 					t.line = append(t.line[:t.position], append([]rune{char}, t.line[t.position:]...)...)

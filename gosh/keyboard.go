@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"unicode"
 )
 
 /* Moving cursor */
@@ -53,10 +52,10 @@ func (t *terminal) wordLeft() {
 			if leftKnown {
 				spaceHere = spaceLeft
 			} else {
-				spaceHere = unicode.IsSpace(t.line[t.position])
+				spaceHere = isABlankSpace(t.line[t.position])
 			}
 
-			spaceLeft, leftKnown = unicode.IsSpace(t.line[t.position-1]), true
+			spaceLeft, leftKnown = isABlankSpace(t.line[t.position-1]), true
 			if !spaceHere && spaceLeft {
 				break
 			}
@@ -79,10 +78,10 @@ func (t *terminal) wordRight() {
 			if hereKnown {
 				spaceLeft = spaceHere
 			} else {
-				spaceLeft = unicode.IsSpace(t.line[t.position-1])
+				spaceLeft = isABlankSpace(t.line[t.position-1])
 			}
 
-			spaceHere, hereKnown = unicode.IsSpace(t.line[t.position]), true
+			spaceHere, hereKnown = isABlankSpace(t.line[t.position]), true
 			if spaceHere && !spaceLeft {
 				break
 			}
@@ -112,7 +111,7 @@ func (t *terminal) deleteNextWord() {
 	// Remove whitespace to the right
 	var buf []rune // Store the deleted chars in a buffer
 	for {
-		if t.position == len(t.line) || !unicode.IsSpace(t.line[t.position]) {
+		if t.position == len(t.line) || !isABlankSpace(t.line[t.position]) {
 			break
 		}
 		buf = append(buf, t.line[t.position])
@@ -121,7 +120,7 @@ func (t *terminal) deleteNextWord() {
 
 	// Remove non-whitespace to the right
 	for {
-		if t.position == len(t.line) || unicode.IsSpace(t.line[t.position]) {
+		if t.position == len(t.line) || isABlankSpace(t.line[t.position]) {
 			break
 		}
 		buf = append(buf, t.line[t.position])
@@ -139,7 +138,7 @@ func (t *terminal) eraseWord() {
 	// Remove whitespace to the left
 	var buf []rune // Store the deleted chars in a buffer
 	for {
-		if t.position == 0 || !unicode.IsSpace(t.line[t.position-1]) {
+		if t.position == 0 || !isABlankSpace(t.line[t.position-1]) {
 			break
 		}
 		buf = append(buf, t.line[t.position-1])
@@ -149,7 +148,7 @@ func (t *terminal) eraseWord() {
 
 	// Remove non-whitespace to the left
 	for {
-		if t.position == 0 || unicode.IsSpace(t.line[t.position-1]) {
+		if t.position == 0 || isABlankSpace(t.line[t.position-1]) {
 			break
 		}
 		buf = append(buf, t.line[t.position-1])
