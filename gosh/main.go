@@ -23,11 +23,9 @@ func main() {
 		}
 
 		command := parseInput(input)
-		if command[0] == "exit" {
+		if err := run(command); err != nil {
 			break
 		}
-
-		run(command)
 	}
 
 	fmt.Fprintln(os.Stdout)

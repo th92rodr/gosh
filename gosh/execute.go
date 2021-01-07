@@ -1,29 +1,27 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	// "syscall"
 )
 
-func run(command []string) {
+func run(command []string) error {
 	fmt.Fprintln(os.Stdout)
 
-	if command[0] == "" { /* Handle empty commands */
-		return
-	}
-
-	if command[0] == "exit" {
-		exit()
-	}
-
-	if command[0] == "cd" {
+	switch command[0] {
+	case "exit":
+		return errors.New("exit")
+	case "cd":
 		cd(command[1])
-		return
+	case "":	// handle empty commands
+	default:
+		execute(command)
 	}
 
-	execute(command)
+	return nil
 }
 
 // execute command in other process
@@ -65,10 +63,11 @@ func execute(command []string) {
 
 var lastDir string
 
-// change directory
+// Change directory
 func cd(path string) {
 	currentDir, _ := os.Getwd()
 
+	// if the informed path is a dash ("-") return to the last directory
 	if path == "-" && lastDir != "" {
 		path = lastDir
 		fmt.Fprintln(os.Stdout, path)
