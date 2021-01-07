@@ -13,48 +13,57 @@ type file struct {
 
 func (t *terminal) tabCompleter() {
 	wordToComplete := ""
-	// if the directory where the search will take place is not specified use the current one
-	currentDir, _ := os.Getwd()
 
-	// fmt.Println("")
+	// if the directory where the search will take place is not specified, use the current one
+	directory, _ := os.Getwd()
+
 	// if the previous char is not a blank space it means a word was being typed
 	if !isEmpty(t.line) && !isABlankSpace(t.line[t.position - 1]) {
 		wordToComplete = t.getWordToComplete()
 
 		// check for slashes ("/")
+		// if there are slashes, means a directory was specified for the search to take place in
 		if strings.Contains(wordToComplete, "/") {
+
+			// slash as a prefix, means to search in the root directory
 			if strings.HasPrefix(wordToComplete, "/") {
-				currentDir = ""
 
 				if strings.Contains(wordToComplete[1:], "/") {
-					a := strings.Split(wordToComplete[1:], "/")
-					// fmt.Println("Tab Completer -- a: ", a)
-					for i := 0; i < len(a) - 1; i++ {
-						currentDir = currentDir + "/" + a[i]
+					substrings := strings.Split(wordToComplete[1:], "/")
+
+					directory = ""
+					for _, substring := range substrings[:len(substrings) - 1] {
+						directory = directory + "/" + substring
 					}
-					wordToComplete = a[len(a) - 1]
+
+					wordToComplete = substrings[len(substrings) - 1]
+
+				// set root as the directory where the search will take place
+				// and remove this prefix slash of the word to complete
 				} else {
-					currentDir = "/"
+					directory = "/"
 					wordToComplete = wordToComplete[1:]
 				}
 
+			// slash as a suffix, means to search in a subdirectory of the current one
+			// and no word to complete
 			} else if strings.HasSuffix(wordToComplete, "/") {
-				currentDir = currentDir + "/" + wordToComplete
+				directory = directory + "/" + wordToComplete
 				wordToComplete = ""
 
 			} else {
-				a := strings.Split(wordToComplete, "/")
-				// fmt.Println("Tab Completer -- a: ", a)
-				for i := 0; i < len(a) - 1; i++ {
-					currentDir = currentDir + "/" + a[i]
+				substrings := strings.Split(wordToComplete, "/")
+
+				for _, substring := range substrings[:len(substrings) - 1] {
+					directory = directory + "/" + substring
 				}
-				wordToComplete = a[len(a) - 1]
+
+				wordToComplete = substrings[len(substrings) - 1]
 			}
 		}
 	}
 
-	// fmt.Println("Tab Completer -- dir: ", currentDir, " | word: ", wordToComplete)
-	t.walk(currentDir, wordToComplete)
+	t.walk(directory, wordToComplete)
 }
 
 // Get all chars from the previous nearest blank space until the current cursor position
@@ -74,18 +83,16 @@ func (t *terminal) getWordToComplete() string {
 }
 
 func (t *terminal) walk(directory string, wordToComplete string) {
-	// fmt.Println("Walk -- dir: ", directory, " | word: ", wordToComplete)
 	files := getFilesFromDir(directory, wordToComplete)
 
 	// If there is a lot of results show them on the screen
-	// fmt.Println("Walk -- files:")
 	if len(files) > 1 {
 		fmt.Println("")
-		for _, f := range files {
-			if f.info.IsDir() {
-				fmt.Print(f.name, "/ ")
+		for _, file := range files {
+			if file.info.IsDir() {
+				fmt.Print(file.name, "/ ")
 			} else {
-				fmt.Print(f.name, " ")
+				fmt.Print(file.name, " ")
 			}
 		}
 		fmt.Println("")
@@ -98,8 +105,6 @@ func (t *terminal) walk(directory string, wordToComplete string) {
 			// position 0 contains the prefix of the word, that is already typed
 			// position 1 contains the complement
 			substrings := strings.SplitAfterN(files[0].name, wordToComplete, 2)
-			// fmt.Println("substrings: ", substrings)
-			// fmt.Println("substrings: ", len(substrings[1]))
 
 			// if the complement is empty, means the role word is already typed
 			// just add a slash in case of a folder or a space in case of a file
@@ -120,7 +125,6 @@ func (t *terminal) walk(directory string, wordToComplete string) {
 			t.line = append(t.line, rest...)
 		}
 
-		// fmt.Println("line: ", string(t.line))
 		t.position = len(t.line)
 	}
 
@@ -135,13 +139,11 @@ func getFilesFromDir(directory string, prefix string) []file {
 	descriptor, err := os.Open(directory)
 	defer descriptor.Close()
 	if err != nil {
-		fmt.Println("err: ", err)
 		return files
 	}
 
 	filesInfo, err := descriptor.Readdir(0)
     if err != nil {
-		fmt.Println("err: ", err)
         return files
 	}
 
@@ -151,6 +153,8 @@ func getFilesFromDir(directory string, prefix string) []file {
 				name: fileInfo.Name(),
 				info: fileInfo,
 			})
+
+		// if there is a prefix filter the files by it
 		} else {
 			if strings.HasPrefix(fileInfo.Name(), prefix) {
 				files = append(files, file{
