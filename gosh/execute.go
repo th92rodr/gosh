@@ -8,6 +8,9 @@ import (
 	// "syscall"
 )
 
+var lastDir string
+var lastExitCode int
+
 func run(input string) error {
 	fmt.Fprintln(os.Stdout)
 
@@ -32,6 +35,14 @@ CommandsLoop:
 
 		case "cd":
 			isError = cd(command[1])
+
+		case "echo":
+			if command[1] == "$?" {
+				// Print the exit code of the last executed process.
+				fmt.Fprintln(os.Stdout, lastExitCode)
+			} else {
+				isError = execute(command)
+			}
 
 		case semiColonOperator:
 		case "":	// handle empty commands
@@ -59,8 +70,10 @@ func execute(command []string) error {
 			// Get the process exit code,
 			// in case of anything rather than 0, it means something unexpected happened.
 			if exitCode := processState.ExitCode(); exitCode != 0 {
+				lastExitCode = exitCode
 				return errors.New("")
 			}
+			lastExitCode = 0
 
 		} else {
 			fmt.Fprintln(os.Stderr, err)
@@ -88,8 +101,6 @@ func execute(command []string) error {
 // 		fmt.Fprintln(os.Stderr, err)
 // 	}
 // }
-
-var lastDir string
 
 // Change directory.
 func cd(path string) error {
