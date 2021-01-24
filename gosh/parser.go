@@ -24,7 +24,7 @@ func parseInput(input string) [][]string {
 	// in the following format [command 1] [AND] [command 2] [OR] [command 3]
 	startIndex := 0
 	for index, arg := range args {
-		if arg == andOperator || arg == orOperator {
+		if arg == andOperator || arg == orOperator || arg == semiColonOperator {
 			commands = append(commands, args[startIndex:index])
 			commands = append(commands, args[index:index+1])
 			startIndex = index + 1

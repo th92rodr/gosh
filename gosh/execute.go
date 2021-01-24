@@ -33,6 +33,7 @@ CommandsLoop:
 		case "cd":
 			isError = cd(command[1])
 
+		case semiColonOperator:
 		case "":	// handle empty commands
 
 		default:
