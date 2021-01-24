@@ -8,24 +8,43 @@ import (
 	// "syscall"
 )
 
-func run(command []string) error {
+func run(input string) error {
 	fmt.Fprintln(os.Stdout)
 
-	switch command[0] {
-	case "exit":
-		return errors.New("exit")
-	case "cd":
-		cd(command[1])
-	case "":	// handle empty commands
-	default:
-		execute(command)
+	commands := parseInput(input)
+	var isError error = nil
+
+CommandsLoop:
+	for _, command := range commands {
+		switch command[0] {
+		case andOperator:
+			if isError != nil {
+				break CommandsLoop
+			}
+
+		case orOperator:
+			if isError == nil {
+				break CommandsLoop
+			}
+
+		case "exit":
+			return errors.New("exit")
+
+		case "cd":
+			isError = cd(command[1])
+
+		case "":	// handle empty commands
+
+		default:
+			isError = execute(command)
+		}
 	}
 
 	return nil
 }
 
-// execute command in other process
-func execute(command []string) {
+// Execute command in other process.
+func execute(command []string) error {
 	if binary, err := exec.LookPath(command[0]); err == nil {
 
 		attr := new(os.ProcAttr)
@@ -34,40 +53,48 @@ func execute(command []string) {
 		attr.Files = []*os.File{os.Stdin, os.Stdout, os.Stderr}
 
 		if process, err := os.StartProcess(binary, command, attr); err == nil {
-			process.Wait()
+			processState, _ := process.Wait()
+
+			// Get the process exit code,
+			// in case of anything rather than 0, it means something unexpected happened.
+			if exitCode := processState.ExitCode(); exitCode != 0 {
+				return errors.New("")
+			}
+
 		} else {
 			fmt.Fprintln(os.Stderr, err)
+			return err
 		}
 
 	} else {
 		fmt.Fprintln(os.Stderr, err)
+		return err
 	}
+
+	return nil
 }
 
-// execute command in the same process
+// Execute command in the same process.
 // func execute(command []string) {
-// 	binary, err := exec.LookPath(command[0])
-// 	if err != nil {
-// 		fmt.Fprintln(os.Stderr, err)
-// 		return
-// 	}
+// 	if binary, err := exec.LookPath(command[0]); err == nil {
+// 		env := os.Environ()
 
-// 	env := os.Environ()
-
-// 	// replaces the current process with the one invoked
-// 	if err = syscall.Exec(binary, command, env); err != nil {
+// 		// Replaces the current process with the one invoked.
+// 		if err = syscall.Exec(binary, command, env); err != nil {
+// 			fmt.Fprintln(os.Stderr, err)
+// 		}
+// 	} else {
 // 		fmt.Fprintln(os.Stderr, err)
-// 		return
 // 	}
 // }
 
 var lastDir string
 
-// Change directory
-func cd(path string) {
+// Change directory.
+func cd(path string) error {
 	currentDir, _ := os.Getwd()
 
-	// if the informed path is a dash ("-") return to the last directory
+	// If the informed path is a dash ("-") return to the last directory.
 	if path == "-" && lastDir != "" {
 		path = lastDir
 		fmt.Fprintln(os.Stdout, path)
@@ -75,9 +102,12 @@ func cd(path string) {
 
 	if err := os.Chdir(path); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		return err
 	}
 
 	lastDir = currentDir
+
+	return nil
 }
 
 func exit() {

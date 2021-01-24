@@ -13,7 +13,7 @@ func main() {
 		return
 	}
 
-	run(parseInput("clear"))
+	run("clear")
 
 	for {
 		input := terminal.prompt()
@@ -22,8 +22,7 @@ func main() {
 			break
 		}
 
-		command := parseInput(input)
-		if err := run(command); err != nil {
+		if err := run(input); err != nil {
 			break
 		}
 	}
