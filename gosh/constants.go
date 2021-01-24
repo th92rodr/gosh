@@ -3,6 +3,9 @@ package main
 const (
 	promptText = "gosh >  "
 	beep = "\a"
+
+	andOperator = "&&"
+	orOperator = "||"
 )
 
 var keys = [][]rune{}
@@ -89,8 +92,8 @@ var F6 = []rune{27, 91, 49, 55, 126}
 var F7 = []rune{27, 91, 49, 56, 126}
 var F8 = []rune{27, 91, 49, 57, 126}
 var F9 = []rune{27, 91, 50, 48, 126}
-var F10 = []rune{}
-var F11 = []rune{}
+var F10 = []rune{27, 91, 50, 50, 126}
+var F11 = []rune{27, 91, 50, 51, 126}
 var F12 = []rune{27, 91, 50, 52, 126}
 
 var ALT_B = []rune{27, 98}
