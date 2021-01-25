@@ -9,9 +9,6 @@ import (
 	"strings"
 )
 
-var lastDir string
-var lastExitCode int
-
 func (t *terminal) run(input string) error {
 	fmt.Fprintln(os.Stdout)
 
@@ -40,21 +37,16 @@ CommandsLoop:
 			return errors.New("exit")
 
 		case "cd":
-			isError = cd(command[1])
+			isError = t.cdCommand(command)
 
 		case "echo":
-			if command[1] == "$?" {
-				// Print the exit code of the last executed process.
-				fmt.Fprintln(os.Stdout, lastExitCode)
-			} else {
-				isError = execute(command)
-			}
+			isError = t.echo(command)
 
 		case semiColonOperator:
 		case "":	// handle empty commands
 
 		default:
-			isError = execute(command)
+			isError = t.execute(command)
 		}
 	}
 
@@ -62,7 +54,7 @@ CommandsLoop:
 }
 
 // Execute command in other process.
-func execute(command []string) error {
+func (t *terminal) execute(command []string) error {
 	if binary, err := exec.LookPath(command[0]); err == nil {
 
 		attr := new(os.ProcAttr)
@@ -76,10 +68,10 @@ func execute(command []string) error {
 			// Get the process exit code,
 			// in case of anything rather than 0, it means something unexpected happened.
 			if exitCode := processState.ExitCode(); exitCode != 0 {
-				lastExitCode = exitCode
+				t.lastExitCode = exitCode
 				return errors.New("")
 			}
-			lastExitCode = 0
+			t.lastExitCode = 0
 
 		} else {
 			fmt.Fprintln(os.Stderr, err)
@@ -134,24 +126,45 @@ func (t *terminal) executeInBackground(command []string, goToGo chan<- bool) {
 // 	}
 // }
 
+func (t* terminal) cdCommand(command []string) error {
+	if len(command) < 2 {
+		return t.cd(os.Getenv("HOME"))
+	} else {
+		return t.cd(command[1])
+	}
+}
+
 // Change directory.
-func cd(path string) error {
+func (t *terminal) cd(path string) error {
 	currentDir, _ := os.Getwd()
 
 	// If the informed path is a dash ("-") return to the last directory.
-	if path == "-" && lastDir != "" {
-		path = lastDir
+	if path == "-" && t.lastDirectory != "" {
+		path = t.lastDirectory
 		fmt.Fprintln(os.Stdout, path)
 	}
 
 	if err := os.Chdir(path); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		t.lastExitCode = 1
 		return err
 	}
 
-	lastDir = currentDir
+	t.lastExitCode = 0
+	t.lastDirectory = currentDir
 
 	return nil
+}
+
+func (t *terminal) echo(command []string) error {
+	if len(command) > 1 && command[1] == "$?" {
+		// Print the exit code of the last executed process.
+		fmt.Fprintln(os.Stdout, t.lastExitCode)
+		t.lastExitCode = 0
+		return nil
+	} else {
+		return t.execute(command)
+	}
 }
 
 func exit() {

@@ -23,6 +23,8 @@ type terminal struct {
 	currentLine
 
 	eof bool
+
+	process
 }
 
 type currentLine struct {
@@ -36,6 +38,11 @@ type currentLine struct {
 
 	historyPosition int
 	historyEnd      string
+}
+
+type process struct {
+	lastDirectory string
+	lastExitCode int
 }
 
 type input struct {
