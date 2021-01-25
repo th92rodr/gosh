@@ -8,23 +8,24 @@ import (
 	"unsafe"
 )
 
-func (t *terminal) refresh(buf string, position int) error {
+func (t *terminal) refresh() {
 	t.cursorPosition(0)
 
 	fmt.Fprint(os.Stdout, promptText)
 
 	pLen := utf8.RuneCountInString(promptText)
-	bLen := utf8.RuneCountInString(buf)
+	bLen := utf8.RuneCountInString(string(t.line))
 
 	if pLen+bLen <= t.columns {
-		fmt.Fprint(os.Stdout, buf)
+		fmt.Fprint(os.Stdout, string(t.line))
 		t.eraseLine()
-		t.cursorPosition(pLen + position)
+		t.cursorPosition(pLen + t.position)
+
 	} else {
 		// Find space available
 		space := t.columns - pLen
 		space-- // space for cursor
-		start := position - space/2
+		start := t.position - space/2
 		end := start + space
 
 		if end > bLen {
@@ -36,7 +37,7 @@ func (t *terminal) refresh(buf string, position int) error {
 			start = 0
 			end = space
 		}
-		position -= start
+		t.position -= start
 
 		// Leave space for markers
 		if start > 0 {
@@ -47,8 +48,7 @@ func (t *terminal) refresh(buf string, position int) error {
 			end--
 		}
 
-		line := []rune(buf)
-		line = line[start:end]
+		line := t.line[start:end]
 
 		// Output
 		if start > 0 {
@@ -62,10 +62,8 @@ func (t *terminal) refresh(buf string, position int) error {
 
 		// Set cursor position
 		t.eraseLine()
-		t.cursorPosition(pLen + position)
+		t.cursorPosition(pLen + t.position)
 	}
-
-	return nil
 }
 
 type winSize struct {
