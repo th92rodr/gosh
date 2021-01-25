@@ -7,6 +7,7 @@ const (
 	andOperator = "&&"
 	orOperator = "||"
 	semiColonOperator = ";"
+	backgroundOperator = "&"
 )
 
 var keys = [][]rune{}
