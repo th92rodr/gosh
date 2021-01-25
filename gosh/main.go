@@ -13,7 +13,7 @@ func main() {
 		return
 	}
 
-	run("clear")
+	terminal.run("clear")
 
 	for {
 		input := terminal.prompt()
@@ -22,7 +22,7 @@ func main() {
 			break
 		}
 
-		if err := run(input); err != nil {
+		if err := terminal.run(input); err != nil {
 			break
 		}
 	}
