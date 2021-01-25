@@ -55,7 +55,7 @@ mainLoop:
 				} else {
 					t.line = append(t.line[:t.position], append([]rune{char}, t.line[t.position:]...)...)
 					t.position++
-					t.refresh(string(t.line), t.position)
+					t.refresh()
 				}
 			}
 
@@ -90,14 +90,14 @@ mainLoop:
 func (t *terminal) startPrompt() {
 	next := make(chan input)
 
-	// keep reading inputs until an end condition is reached
+	// Keep reading inputs until an end condition is reached.
 	go func() {
 		for {
 			var i input
 			i.char, _, i.err = t.reader.ReadRune()
 			next <- i
 
-			// Stop next input loop when an end condition has been reached
+			// Stop next input loop when an end condition has been reached.
 			if i.err != nil || i.char == '\n' || i.char == '\r' || i.char == ENTER {
 				close(next)
 				return
@@ -157,15 +157,15 @@ func (t *terminal) executeEscapeKey() {
 			}
 
 			if t.needRefresh {
-				t.refresh(string(t.line), t.position)
+				t.refresh()
 			}
 
-			t.pendingEsc = t.pendingEsc[:0]
+			t.pendingEsc = t.pendingEsc[:0]		// Clean slice
 			t.escIsOn = false
 			return
 		}
 	}
 
-	t.pendingEsc = t.pendingEsc[:0]
+	t.pendingEsc = t.pendingEsc[:0]		// Clean slice
 	t.escIsOn = false
 }
