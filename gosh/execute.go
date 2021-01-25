@@ -19,6 +19,24 @@ CommandsLoop:
 	for _, command := range commands {
 		switch command[0] {
 		case backgroundOperator:
+
+			if len(command) > 1 && (command[1] == "cd" || command[1] == "exit") {
+				t.processesInBackground++
+				fmt.Fprintln(os.Stdout, "[",t.processesInBackground,"]\t", strings.Join(command[1:], " "))
+				fmt.Fprintln(os.Stdout, "[",t.processesInBackground,"]\t", strings.Join(command[1:], " "), "\tDone")
+				t.processesInBackground--
+				continue
+			}
+
+			if len(command) > 1 && command[1] == "echo" {
+				t.processesInBackground++
+				t.echo(command[1:])
+				fmt.Fprintln(os.Stdout, "[",t.processesInBackground,"]\t", strings.Join(command[1:], " "))
+				fmt.Fprintln(os.Stdout, "[",t.processesInBackground,"]\t", strings.Join(command[1:], " "), "\tDone")
+				t.processesInBackground--
+				continue
+			}
+
 			goToGo := make(chan bool)
 			go t.executeInBackground(command[1:], goToGo)
 			<-goToGo
@@ -95,11 +113,14 @@ func (t *terminal) executeInBackground(command []string, goToGo chan<- bool) {
 		attr.Files = []*os.File{os.Stdin, os.Stdout, os.Stderr}
 
 		if process, err := os.StartProcess(binary, command, attr); err == nil {
-			fmt.Fprintln(os.Stdout, "[1]\t", process.Pid, "\t", strings.Join(command, " "))
+			t.processesInBackground++
+			processNumber := t.processesInBackground
+			fmt.Fprintln(os.Stdout, "[",processNumber,"]\t", process.Pid, "\t", strings.Join(command, " "))
 			goToGo <- true
 			process.Wait()
-			fmt.Fprintln(os.Stdout, "\n[1]\t", process.Pid, "\t", strings.Join(command, " "), "\tDone")
+			fmt.Fprintln(os.Stdout, "\n[",processNumber,"]\t", process.Pid, "\t", strings.Join(command, " "), "\tDone")
 			t.refresh()
+			t.processesInBackground--
 
 		} else {
 			fmt.Fprintln(os.Stderr, err)
