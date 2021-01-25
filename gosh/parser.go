@@ -28,9 +28,15 @@ func parseInput(input string) [][]string {
 			commands = append(commands, args[startIndex:index])
 			commands = append(commands, args[index:index+1])
 			startIndex = index + 1
+		} else if arg == backgroundOperator {
+			command := append(args[index:index+1], args[startIndex:index]...)
+			commands = append(commands, command)
+			startIndex = index + 1
 		}
 	}
-	commands = append(commands, args[startIndex:])
+	if startIndex < len(args) {
+		commands = append(commands, args[startIndex:])
+	}
 
 	return commands
 }

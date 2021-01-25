@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	// "syscall"
+	"strings"
 )
 
 var lastDir string
@@ -20,6 +21,11 @@ func run(input string) error {
 CommandsLoop:
 	for _, command := range commands {
 		switch command[0] {
+		case backgroundOperator:
+			goToGo := make(chan bool)
+			go executeInBackground(command[1:], goToGo)
+			<-goToGo
+
 		case andOperator:
 			if isError != nil {
 				break CommandsLoop
@@ -86,6 +92,31 @@ func execute(command []string) error {
 	}
 
 	return nil
+}
+
+func executeInBackground(command []string, goToGo chan<- bool) {
+	if binary, err := exec.LookPath(command[0]); err == nil {
+
+		attr := new(os.ProcAttr)
+		attr.Dir, _ = os.Getwd()
+		attr.Env = os.Environ()
+		attr.Files = []*os.File{os.Stdin, os.Stdout, os.Stderr}
+
+		if process, err := os.StartProcess(binary, command, attr); err == nil {
+			fmt.Fprintln(os.Stdout, "[1]\t", process.Pid, "\t", strings.Join(command, " "))
+			goToGo <- true
+			process.Wait()
+			fmt.Fprintln(os.Stdout, "\n[1]\t", process.Pid, "\t", strings.Join(command, " "), "\tDone")
+
+		} else {
+			fmt.Fprintln(os.Stderr, err)
+			goToGo <- true
+		}
+
+	} else {
+		fmt.Fprintln(os.Stderr, err)
+		goToGo <- true
+	}
 }
 
 // Execute command in the same process.
