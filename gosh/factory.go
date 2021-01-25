@@ -43,6 +43,8 @@ type currentLine struct {
 type process struct {
 	lastDirectory string
 	lastExitCode int
+
+	processesInBackground int
 }
 
 type input struct {
