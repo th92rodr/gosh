@@ -12,7 +12,7 @@ import (
 var lastDir string
 var lastExitCode int
 
-func run(input string) error {
+func (t *terminal) run(input string) error {
 	fmt.Fprintln(os.Stdout)
 
 	commands := parseInput(input)
@@ -23,7 +23,7 @@ CommandsLoop:
 		switch command[0] {
 		case backgroundOperator:
 			goToGo := make(chan bool)
-			go executeInBackground(command[1:], goToGo)
+			go t.executeInBackground(command[1:], goToGo)
 			<-goToGo
 
 		case andOperator:
@@ -94,7 +94,7 @@ func execute(command []string) error {
 	return nil
 }
 
-func executeInBackground(command []string, goToGo chan<- bool) {
+func (t *terminal) executeInBackground(command []string, goToGo chan<- bool) {
 	if binary, err := exec.LookPath(command[0]); err == nil {
 
 		attr := new(os.ProcAttr)
@@ -107,6 +107,7 @@ func executeInBackground(command []string, goToGo chan<- bool) {
 			goToGo <- true
 			process.Wait()
 			fmt.Fprintln(os.Stdout, "\n[1]\t", process.Pid, "\t", strings.Join(command, " "), "\tDone")
+			t.refresh()
 
 		} else {
 			fmt.Fprintln(os.Stderr, err)
