@@ -42,20 +42,17 @@ func (t *terminal) right() {
 // Move cursor one word left
 func (t *terminal) wordLeft() {
 	if t.position > 0 {
-		var spaceHere, spaceLeft, leftKnown bool
 		for {
 			t.position--
+
+			// Check for begining of line
 			if t.position == 0 {
 				break
 			}
 
-			if leftKnown {
-				spaceHere = spaceLeft
-			} else {
-				spaceHere = isABlankSpace(t.line[t.position])
-			}
+			spaceHere := isABlankSpace(t.line[t.position])
+			spaceLeft := isABlankSpace(t.line[t.position-1])
 
-			spaceLeft, leftKnown = isABlankSpace(t.line[t.position-1]), true
 			if !spaceHere && spaceLeft {
 				break
 			}
@@ -68,20 +65,17 @@ func (t *terminal) wordLeft() {
 // Move cursor one word right
 func (t *terminal) wordRight() {
 	if t.position < len(t.line) {
-		var spaceHere, spaceLeft, hereKnown bool
 		for {
 			t.position++
+
+			// Check for end of line
 			if t.position == len(t.line) {
 				break
 			}
 
-			if hereKnown {
-				spaceLeft = spaceHere
-			} else {
-				spaceLeft = isABlankSpace(t.line[t.position-1])
-			}
+			spaceHere := isABlankSpace(t.line[t.position])
+			spaceLeft := isABlankSpace(t.line[t.position-1])
 
-			spaceHere, hereKnown = isABlankSpace(t.line[t.position]), true
 			if spaceHere && !spaceLeft {
 				break
 			}
@@ -109,12 +103,10 @@ func (t *terminal) deleteNextWord() {
 	}
 
 	// Remove whitespace to the right
-	var buf []rune // Store the deleted chars in a buffer
 	for {
 		if t.position == len(t.line) || !isABlankSpace(t.line[t.position]) {
 			break
 		}
-		buf = append(buf, t.line[t.position])
 		t.line = append(t.line[:t.position], t.line[t.position+1:]...)
 	}
 
@@ -123,7 +115,6 @@ func (t *terminal) deleteNextWord() {
 		if t.position == len(t.line) || isABlankSpace(t.line[t.position]) {
 			break
 		}
-		buf = append(buf, t.line[t.position])
 		t.line = append(t.line[:t.position], t.line[t.position+1:]...)
 	}
 }
@@ -136,12 +127,10 @@ func (t *terminal) eraseWord() {
 	}
 
 	// Remove whitespace to the left
-	var buf []rune // Store the deleted chars in a buffer
 	for {
 		if t.position == 0 || !isABlankSpace(t.line[t.position-1]) {
 			break
 		}
-		buf = append(buf, t.line[t.position-1])
 		t.line = append(t.line[:t.position-1], t.line[t.position:]...)
 		t.position--
 	}
@@ -151,15 +140,8 @@ func (t *terminal) eraseWord() {
 		if t.position == 0 || isABlankSpace(t.line[t.position-1]) {
 			break
 		}
-		buf = append(buf, t.line[t.position-1])
 		t.line = append(t.line[:t.position-1], t.line[t.position:]...)
 		t.position--
-	}
-
-	// Invert the buffer and save the result on the killRing
-	var newBuf []rune
-	for i := len(buf) - 1; i >= 0; i-- {
-		newBuf = append(newBuf, buf[i])
 	}
 
 	t.needRefresh = true
