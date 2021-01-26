@@ -73,6 +73,10 @@ func New() *terminal {
 		terminal.createSigIntChannel()
 	}
 
+	terminal.lastDirectory = ""
+	terminal.lastExitCode = 0
+	terminal.processesInBackground = 0
+
 	return &terminal
 }
 
