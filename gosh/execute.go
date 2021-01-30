@@ -22,8 +22,8 @@ CommandsLoop:
 
 			if len(command) > 1 && (command[1] == "cd" || command[1] == "exit") {
 				t.processesInBackground++
-				fmt.Fprintln(os.Stdout, "[",t.processesInBackground,"]\t", strings.Join(command[1:], " "))
-				fmt.Fprintln(os.Stdout, "[",t.processesInBackground,"]\t", strings.Join(command[1:], " "), "\tDone")
+				fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "))
+				fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "), "\tDone")
 				t.processesInBackground--
 				continue
 			}
@@ -31,8 +31,8 @@ CommandsLoop:
 			if len(command) > 1 && command[1] == "echo" {
 				t.processesInBackground++
 				t.echo(command[1:])
-				fmt.Fprintln(os.Stdout, "[",t.processesInBackground,"]\t", strings.Join(command[1:], " "))
-				fmt.Fprintln(os.Stdout, "[",t.processesInBackground,"]\t", strings.Join(command[1:], " "), "\tDone")
+				fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "))
+				fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "), "\tDone")
 				t.processesInBackground--
 				continue
 			}
@@ -115,10 +115,10 @@ func (t *terminal) executeInBackground(command []string, goToGo chan<- bool) {
 		if process, err := os.StartProcess(binary, command, attr); err == nil {
 			t.processesInBackground++
 			processNumber := t.processesInBackground
-			fmt.Fprintln(os.Stdout, "[",processNumber,"]\t", process.Pid, "\t", strings.Join(command, " "))
+			fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t%d\t", processNumber, process.Pid), strings.Join(command, " "))
 			goToGo <- true
 			process.Wait()
-			fmt.Fprintln(os.Stdout, "\n[",processNumber,"]\t", process.Pid, "\t", strings.Join(command, " "), "\tDone")
+			fmt.Fprintln(os.Stdout, fmt.Sprintf("\n[%d]\t%d\t", processNumber, process.Pid), strings.Join(command, " "), "\tDone")
 			t.refresh()
 			t.processesInBackground--
 
@@ -147,7 +147,7 @@ func (t *terminal) executeInBackground(command []string, goToGo chan<- bool) {
 // 	}
 // }
 
-func (t* terminal) cdCommand(command []string) error {
+func (t *terminal) cdCommand(command []string) error {
 	if len(command) < 2 {
 		return t.cd(os.Getenv("HOME"))
 	} else {
