@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-/* Moving cursor */
+//// Moving cursor
 
 // Move cursor to beginning of line
 func (t *terminal) home() {
@@ -85,7 +85,21 @@ func (t *terminal) wordRight() {
 	}
 }
 
-/* Deleting character */
+// Transpose previous character with current character
+func (t *terminal) ctrlT() {
+	if len(t.line) < 2 || t.position < 1 {
+		doBeep()
+	} else {
+		if t.position == len(t.line) {
+			t.position--
+		}
+		t.line[t.position-1], t.line[t.position] = t.line[t.position], t.line[t.position-1]
+		t.position++
+		t.needRefresh = true
+	}
+}
+
+//// Deleting characters
 
 // Delete current character
 func (t *terminal) delete() {
@@ -175,8 +189,9 @@ func (t *terminal) ctrlH() {
 	}
 }
 
-/* History */
+//// History
 
+// Previous command from history
 func (t *terminal) up() {
 	if t.historyPosition > 0 {
 		if t.historyPosition == len(t.history) {
@@ -191,6 +206,7 @@ func (t *terminal) up() {
 	}
 }
 
+// Next command from history
 func (t *terminal) down() {
 	if t.historyPosition < len(t.history) {
 		t.historyPosition++
@@ -206,21 +222,7 @@ func (t *terminal) down() {
 	}
 }
 
-/* */
-
-// Transpose previous character with current character
-func (t *terminal) ctrlT() {
-	if len(t.line) < 2 || t.position < 1 {
-		doBeep()
-	} else {
-		if t.position == len(t.line) {
-			t.position--
-		}
-		t.line[t.position-1], t.line[t.position] = t.line[t.position], t.line[t.position-1]
-		t.position++
-		t.needRefresh = true
-	}
-}
+////
 
 // Clear screen
 func (t *terminal) ctrlL() {
@@ -228,6 +230,7 @@ func (t *terminal) ctrlL() {
 	t.needRefresh = true
 }
 
+// End of File - if line is empty quits application
 func (t *terminal) ctrlD() {
 	if t.position == 0 && len(t.line) == 0 {
 		t.eof = true
@@ -242,6 +245,7 @@ func (t *terminal) ctrlD() {
 	}
 }
 
+// Reset input
 func (t *terminal) ctrlC() {
 	fmt.Fprintln(os.Stdout, "^C")
 	t.line = t.line[:0]
