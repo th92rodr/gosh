@@ -140,3 +140,23 @@ func init() {
 		index++
 	}
 }
+
+var (
+	black = color("\033[1;30m%s\033[0m")
+	red = color("\033[1;31m%s\033[0m")
+	green = color("\033[1;32m%s\033[0m")
+	yellow = color("\033[1;33m%s\033[0m")
+	blue = color("\033[1;34m%s\033[0m")
+	magenta = color("\033[1;35m%s\033[0m")
+	cyan = color("\033[1;36m%s\033[0m")
+	lightGray = color("\033[1;37m%s\033[0m")
+	defaultColor = color("\033[1;39m%s\033[0m")
+	darkGray = color("\033[1;90m%s\033[0m")
+	lightRed = color("\033[1;91m%s\033[0m")
+	lightGreen = color("\033[1;92m%s\033[0m")
+	lightYellow = color("\033[1;93m%s\033[0m")
+	lightBlue = color("\033[1;94m%s\033[0m")
+	lightMagenta = color("\033[1;95m%s\033[0m")
+	lightCyan = color("\033[1;96m%s\033[0m")
+	white = color("\033[1;97m%s\033[0m")
+)
