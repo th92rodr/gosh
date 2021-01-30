@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	// "syscall"
 	"strings"
+	"syscall"
 )
 
 func (t *terminal) run(input string) error {
@@ -111,6 +111,17 @@ func (t *terminal) executeInBackground(command []string, goToGo chan<- bool) {
 		attr.Dir, _ = os.Getwd()
 		attr.Env = os.Environ()
 		attr.Files = []*os.File{os.Stdin, os.Stdout, os.Stderr}
+
+		/*
+		Start the process in its own process group by setting the Setpgid and Pgid fields in syscall.SysProcAttr,
+		to prevent the process to receive signals sent directly to the parent process (gosh).
+		By default, child processes start in the same process group, so without this piece of code,
+		the process would be subject to signals, and would be killed if ctrl+c was pressed.
+		*/
+		attr.Sys = &syscall.SysProcAttr{
+			Setpgid: true,
+			Pgid:    0,
+		}
 
 		if process, err := os.StartProcess(binary, command, attr); err == nil {
 			t.processesInBackground++
