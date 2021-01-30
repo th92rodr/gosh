@@ -5,9 +5,14 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <setjmp.h>
 
 char **parse_input(char *);
 int cd(char *);
+void sigint_handler(int);
+
+static sigjmp_buf env;
+static volatile sig_atomic_t jump_active = 0;
 
 int main() {
     char *input;
@@ -15,9 +20,23 @@ int main() {
     pid_t child_pid;
     int stat_loc;
 
-    signal(SIGINT, SIG_IGN);    /* Ignores SIGINT signals when in parent process */
+    /* Setup SIGINT */
+    struct sigaction s;
+    s.sa_handler = sigint_handler;
+    sigemptyset(&s.sa_mask);
+    s.sa_flags = SA_RESTART;
+    sigaction(SIGINT, &s, NULL);
+
+    // signal(SIGINT, SIG_IGN);    /* Ignores SIGINT signals when in parent process */
 
     while (1) {
+        if (sigsetjmp(env, 1) == 42) {
+            printf("\n");
+            continue;
+        }
+
+        jump_active = 1;
+
         input = readline("unixsh> ");
 
         if (input == NULL) {  /* Exit on Ctrl-D */
@@ -100,4 +119,11 @@ char **parse_input(char *input) {
 
 int cd(char *path) {
     return chdir(path);
+}
+
+void sigint_handler(int signo) {
+    if (!jump_active) {
+        return;
+    }
+    siglongjmp(env, 42);
 }
