@@ -43,8 +43,9 @@ var keyNameMapsToEscSequence = map[string][]rune {
 	"f12": F12,
 
 	"altB": ALT_B,
-	"altF": ALT_F,
 	"altD": ALT_D,
+	"altF": ALT_F,
+	"altY": ALT_Y,
 	"altBackspace": ALT_BACKSPACE,
 
 	"wordLeft": WORD_LEFT,
@@ -56,19 +57,30 @@ var keyNameMapsToEscSequence = map[string][]rune {
 	"ctrlD": CTRL_D,
 	"ctrlE": CTRL_E,
 	"ctrlF": CTRL_F,
+	"ctrlG": CTRL_G,
 	"ctrlH": CTRL_H,
 	"ctrlK": CTRL_K,
 	"ctrlL": CTRL_L,
 	"ctrlN": CTRL_N,
+	"ctrlO": CTRL_O,
 	"ctrlP": CTRL_P,
+	"ctrlQ": CTRL_Q,
+	"ctrlR": CTRL_R,
+	"ctrlS": CTRL_S,
 	"ctrlT": CTRL_T,
 	"ctrlU": CTRL_U,
+	"ctrlV": CTRL_V,
 	"ctrlW": CTRL_W,
+	"ctrlX": CTRL_X,
+	"ctrlY": CTRL_Y,
+	"ctrlZ": CTRL_Z,
 
 	"tab": TAB,
 	"lineFeed": LINE_FEED,
 	"carriageReturn": CARRIAGE_RETURN,
 	"backspace": BACKSPACE,
+
+	"shiftTab": SHIFT_TAB,
 }
 
 var HOME = []rune{27, 91, 72}
@@ -99,8 +111,9 @@ var F11 = []rune{27, 91, 50, 51, 126}
 var F12 = []rune{27, 91, 50, 52, 126}
 
 var ALT_B = []rune{27, 98}
-var ALT_F = []rune{27, 102}
 var ALT_D = []rune{27, 100}
+var ALT_F = []rune{27, 102}
+var ALT_Y = []rune{27, 121}
 var ALT_BACKSPACE = []rune{27, 127}
 
 var WORD_LEFT = []rune{27, 91, 49, 59, 53, 68}		// CTRL + ARROW LEFT
@@ -112,20 +125,30 @@ var CTRL_C = []rune{3}
 var CTRL_D = []rune{4}
 var CTRL_E = []rune{5}
 var CTRL_F = []rune{6}
+var CTRL_G = []rune{7}
 var CTRL_H = []rune{8}
 var CTRL_K = []rune{11}
 var CTRL_L = []rune{12}
 var CTRL_N = []rune{14}
+var CTRL_O = []rune{15}
 var CTRL_P = []rune{16}
+var CTRL_Q = []rune{17}
+var CTRL_R = []rune{18}
+var CTRL_S = []rune{19}
 var CTRL_T = []rune{20}
 var CTRL_U = []rune{21}
+var CTRL_V = []rune{22}
 var CTRL_W = []rune{23}
+var CTRL_X = []rune{24}
+var CTRL_Y = []rune{25}
+var CTRL_Z = []rune{26}
 
 var TAB = []rune{9}
 var LINE_FEED = []rune{10}
 var CARRIAGE_RETURN = []rune{13}
-
 var BACKSPACE = []rune{127}
+
+var SHIFT_TAB = []rune{27, 91, 90}
 
 const ESC = 27
 const ENTER = 13
