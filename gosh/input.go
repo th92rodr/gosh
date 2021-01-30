@@ -124,6 +124,8 @@ func (t *terminal) executeEscapeKey() {
 				t.wordLeft()
 			case "altF", "wordRight":
 				t.wordRight()
+			case "ctrlT":
+				t.ctrlT()
 
 			case "delete":
 				t.delete()
@@ -143,8 +145,6 @@ func (t *terminal) executeEscapeKey() {
 			case "down", "ctrlN":
 				t.down()
 
-			case "ctrlT":
-				t.ctrlT()
 			case "ctrlL":
 				t.ctrlL()
 			case "ctrlD":
