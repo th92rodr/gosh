@@ -1,7 +1,8 @@
 package main
 
 import (
-    "unicode"
+	"fmt"
+	"unicode"
 )
 
 func isEmpty(slice []rune) bool {
@@ -25,4 +26,10 @@ func isEqual(a, b []rune) bool {
 	}
 
 	return true
+}
+
+func color(colorString string) func(...interface{}) string {
+	return func(args ...interface{}) string {
+		return fmt.Sprintf(colorString, fmt.Sprint(args...))
+	}
 }
