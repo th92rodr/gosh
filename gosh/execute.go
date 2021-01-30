@@ -178,14 +178,38 @@ func (t *terminal) cd(path string) error {
 }
 
 func (t *terminal) echo(command []string) error {
-	if len(command) > 1 && command[1] == "$?" {
-		// Print the exit code of the last executed process.
-		fmt.Fprintln(os.Stdout, t.lastExitCode)
-		t.lastExitCode = 0
-		return nil
-	} else {
-		return t.execute(command)
+	if len(command) > 1 {
+		commandStr := strings.Join(command[1:], " ")
+
+		// Check if there is any "$" in the command
+		// If it is, replace the $word for the correspondent env variable
+		if strings.Contains(commandStr, "$") {
+			// Do the checking word by word of the command
+			for _, word := range command[1:] {
+				words := strings.Split(word, "$")
+
+				// Start evaluating from the second array element
+				// Because, it only matters the string after the "$" symbol
+				for _, envVariable := range words[1:] {
+					var envVariableValue string
+
+					// If the env var is $?
+					// Get the exit code of the last executed process.
+					if envVariable == "?" {
+						envVariableValue = fmt.Sprint(t.lastExitCode)
+					} else {
+						envVariableValue = os.Getenv(envVariable)
+					}
+
+					commandStr = strings.ReplaceAll(commandStr, "$"+envVariable, envVariableValue)
+				}
+			}
+
+			copy(command[1:], strings.Split(commandStr, " "))
+		}
 	}
+
+	return t.execute(command)
 }
 
 func exit() {
