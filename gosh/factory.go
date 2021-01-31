@@ -44,7 +44,9 @@ type process struct {
 	lastDirectory string
 	lastExitCode int
 
-	processesInBackground int
+	processesInBackground int	// Number of process running in background
+	fgActive bool
+	waitBackgroundProcess chan bool
 }
 
 type input struct {
@@ -69,13 +71,15 @@ func New() *terminal {
 		syscall.Syscall(syscall.SYS_IOCTL, uintptr(syscall.Stdin), syscall.TCSETS, uintptr(unsafe.Pointer(&mode)))
 
 		terminal.createWinchChannel()
-
 		terminal.createSigIntChannel()
 	}
 
 	terminal.lastDirectory = ""
 	terminal.lastExitCode = 0
+
 	terminal.processesInBackground = 0
+	terminal.fgActive = false
+	terminal.waitBackgroundProcess = make(chan bool)
 
 	return &terminal
 }
