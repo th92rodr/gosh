@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"syscall"
 )
@@ -37,9 +38,9 @@ CommandsLoop:
 				continue
 			}
 
-			goToGo := make(chan bool)
-			go t.executeInBackground(command[1:], goToGo)
-			<-goToGo
+			goodToGo := make(chan bool)
+			go t.executeInBackground(command[1:], goodToGo)
+			<-goodToGo
 
 		case andOperator:
 			if isError != nil {
@@ -59,6 +60,9 @@ CommandsLoop:
 
 		case "echo":
 			isError = t.echo(command)
+
+		case "fg":
+			t.foreground()
 
 		case semiColonOperator:
 		case "":	// handle empty commands
@@ -104,9 +108,13 @@ func (t *terminal) execute(command []string) error {
 	return nil
 }
 
-func (t *terminal) executeInBackground(command []string, goToGo chan<- bool) {
-	if binary, err := exec.LookPath(command[0]); err == nil {
+func (t *terminal) executeInBackground(command []string, goodToGo chan<- bool) {
+	// Catch SIGINT signals
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, syscall.SIGINT)
+	defer signal.Stop(sigint)
 
+	if binary, err := exec.LookPath(command[0]); err == nil {
 		attr := new(os.ProcAttr)
 		attr.Dir, _ = os.Getwd()
 		attr.Env = os.Environ()
@@ -124,24 +132,79 @@ func (t *terminal) executeInBackground(command []string, goToGo chan<- bool) {
 		}
 
 		if process, err := os.StartProcess(binary, command, attr); err == nil {
+			// Channel to terminate the goroutine when the process finishes
+			processFinished := make(chan bool)
+
+			// Start a goroutine to handle signals coming in
+			go func () {
+				for {
+					select {
+					case <-sigint:
+						// When a SIGINT signal arrives, only kill the process if foreground is active
+						if t.fgActive {
+							process.Kill()
+						}
+
+					// When the process finishes, terminate the goroutine
+					case <-processFinished:
+						return
+					}
+				}
+			}()
+
 			t.processesInBackground++
 			processNumber := t.processesInBackground
 			fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t%d\t", processNumber, process.Pid), strings.Join(command, " "))
-			goToGo <- true
+
+			// Release the main thread to continue executing
+			goodToGo <- true
+
+			// Wait for the process to finish
 			process.Wait()
-			fmt.Fprintln(os.Stdout, fmt.Sprintf("\n[%d]\t%d\t", processNumber, process.Pid), strings.Join(command, " "), "\tDone")
-			t.refresh()
+
+			processFinished <- true
+
+			fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t%d\t", processNumber, process.Pid), strings.Join(command, " "), "\tDone")
 			t.processesInBackground--
+
+			// Do not refresh the prompt if foreground is active
+			if !t.fgActive {
+				t.refresh()
+			} else {
+				// If foreground is active, release the waiting main thread
+				t.waitBackgroundProcess <- true
+			}
 
 		} else {
 			fmt.Fprintln(os.Stderr, err)
-			goToGo <- true
+			// Release the main thread to continue executing
+			goodToGo <- true
 		}
 
 	} else {
 		fmt.Fprintln(os.Stderr, err)
-		goToGo <- true
+		// Release the main thread to continue executing
+		goodToGo <- true
 	}
+}
+
+func (t *terminal) foreground() {
+	if t.processesInBackground > 0 {
+		fmt.Fprintln(os.Stdout, "command")
+		t.fgActive = true
+
+		// Wait for the process to finishes
+		<-t.waitBackgroundProcess
+
+		// Clean the prompt
+		t.line = t.line[:0]
+		t.position = 0
+
+	} else {
+		fmt.Fprintln(os.Stderr, "No process running in background")
+	}
+
+	t.fgActive = false
 }
 
 // Execute command in the same process.
