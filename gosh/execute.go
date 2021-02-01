@@ -19,29 +19,6 @@ func (t *terminal) run(input string) error {
 CommandsLoop:
 	for _, command := range commands {
 		switch command[0] {
-		case backgroundOperator:
-
-			if len(command) > 1 && (command[1] == "cd" || command[1] == "exit") {
-				t.processesInBackground++
-				fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "))
-				fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "), "\tDone")
-				t.processesInBackground--
-				continue
-			}
-
-			if len(command) > 1 && command[1] == "echo" {
-				t.processesInBackground++
-				t.echo(command[1:])
-				fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "))
-				fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "), "\tDone")
-				t.processesInBackground--
-				continue
-			}
-
-			goodToGo := make(chan bool)
-			go t.executeInBackground(command[1:], goodToGo)
-			<-goodToGo
-
 		case andOperator:
 			if isError != nil {
 				break CommandsLoop
@@ -51,6 +28,9 @@ CommandsLoop:
 			if isError == nil {
 				break CommandsLoop
 			}
+
+		case backgroundOperator:
+			t.background(command)
 
 		case "exit":
 			return errors.New("exit")
@@ -66,7 +46,6 @@ CommandsLoop:
 
 		case semiColonOperator:
 		case "":	// handle empty commands
-
 		default:
 			isError = t.execute(command)
 		}
@@ -108,6 +87,29 @@ func (t *terminal) execute(command []string) error {
 	return nil
 }
 
+func (t *terminal) background(command []string) {
+	if len(command) > 1 && (command[1] == "cd" || command[1] == "exit") {
+		t.processesInBackground++
+		fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "))
+		fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "), "\tDone")
+		t.processesInBackground--
+		return
+	}
+
+	if len(command) > 1 && command[1] == "echo" {
+		t.processesInBackground++
+		t.echo(command[1:])
+		fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "))
+		fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t", t.processesInBackground), strings.Join(command[1:], " "), "\tDone")
+		t.processesInBackground--
+		return
+	}
+
+	goodToGo := make(chan bool)
+	go t.executeInBackground(command[1:], goodToGo)
+	<-goodToGo
+}
+
 func (t *terminal) executeInBackground(command []string, goodToGo chan<- bool) {
 	// Catch SIGINT signals
 	sigint := make(chan os.Signal, 1)
@@ -132,6 +134,13 @@ func (t *terminal) executeInBackground(command []string, goodToGo chan<- bool) {
 		}
 
 		if process, err := os.StartProcess(binary, command, attr); err == nil {
+			t.processesInBackground++
+			processNumber := t.processesInBackground
+			fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t%d\t", processNumber, process.Pid), strings.Join(command, " "))
+
+			// Release the main thread to continue executing
+			goodToGo <- true
+
 			// Channel to terminate the goroutine when the process finishes
 			processFinished := make(chan bool)
 
@@ -140,8 +149,9 @@ func (t *terminal) executeInBackground(command []string, goodToGo chan<- bool) {
 				for {
 					select {
 					case <-sigint:
-						// When a SIGINT signal arrives, only kill the process if foreground is active
-						if t.fgActive {
+						// When a SIGINT signal arrives, only kill the process if foreground is active,
+						// And if it is the last process to be ran.
+						if t.fgActive && processNumber == t.processesInBackground {
 							process.Kill()
 						}
 
@@ -151,13 +161,6 @@ func (t *terminal) executeInBackground(command []string, goodToGo chan<- bool) {
 					}
 				}
 			}()
-
-			t.processesInBackground++
-			processNumber := t.processesInBackground
-			fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t%d\t", processNumber, process.Pid), strings.Join(command, " "))
-
-			// Release the main thread to continue executing
-			goodToGo <- true
 
 			// Wait for the process to finish
 			process.Wait()
@@ -206,20 +209,6 @@ func (t *terminal) foreground() {
 
 	t.fgActive = false
 }
-
-// Execute command in the same process.
-// func execute(command []string) {
-// 	if binary, err := exec.LookPath(command[0]); err == nil {
-// 		env := os.Environ()
-
-// 		// Replaces the current process with the one invoked.
-// 		if err = syscall.Exec(binary, command, env); err != nil {
-// 			fmt.Fprintln(os.Stderr, err)
-// 		}
-// 	} else {
-// 		fmt.Fprintln(os.Stderr, err)
-// 	}
-// }
 
 func (t *terminal) cdCommand(command []string) error {
 	if len(command) < 2 {
