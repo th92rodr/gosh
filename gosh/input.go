@@ -41,13 +41,12 @@ mainLoop:
 				// Wait for the rest of the escape sequence during 50 ms
 				// If nothing else arrives, it was an actual ESC key
 				timeout = time.After(50 * time.Millisecond)
+
+			} else if isKeyStroke(char) {
+				t.pendingEsc = append(t.pendingEsc, char)
+				break mainLoop
+
 			} else {
-
-				if char == CTRL_A[0] || char == CTRL_B[0] || char == CTRL_D[0] || char == CTRL_E[0] || char == CTRL_F[0] || char == CTRL_H[0] || char == CTRL_K[0] || char == CTRL_L[0] || char == CTRL_N[0] || char == CTRL_P[0] || char == CTRL_T[0] || char == CTRL_U[0] || char == CTRL_W[0] || char == TAB[0] || char == LINE_FEED[0] || char == CARRIAGE_RETURN[0] || char == BACKSPACE[0] {
-					t.pendingEsc = append(t.pendingEsc, char)
-					break mainLoop
-				}
-
 				if t.position == len(t.line) && len(promptText)+len(t.line) < t.columns {
 					t.line = append(t.line, char)
 					fmt.Fprintf(os.Stdout, "%s", string(char))
@@ -168,4 +167,24 @@ func (t *terminal) executeEscapeKey() {
 
 	t.pendingEsc = t.pendingEsc[:0]		// Clean slice
 	t.escIsOn = false
+}
+
+func isKeyStroke(char rune) bool {
+	return char == CTRL_A[0] ||
+		char == CTRL_B[0] ||
+		char == CTRL_D[0] ||
+		char == CTRL_E[0] ||
+		char == CTRL_F[0] ||
+		char == CTRL_H[0] ||
+		char == CTRL_K[0] ||
+		char == CTRL_L[0] ||
+		char == CTRL_N[0] ||
+		char == CTRL_P[0] ||
+		char == CTRL_T[0] ||
+		char == CTRL_U[0] ||
+		char == CTRL_W[0] ||
+		char == TAB[0] ||
+		char == LINE_FEED[0] ||
+		char == CARRIAGE_RETURN[0] ||
+		char == BACKSPACE[0]
 }
