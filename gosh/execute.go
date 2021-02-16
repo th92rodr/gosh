@@ -57,7 +57,6 @@ CommandsLoop:
 // Execute command in other process.
 func (t *terminal) execute(command []string) error {
 	if binary, err := exec.LookPath(command[0]); err == nil {
-
 		attr := new(os.ProcAttr)
 		attr.Dir, _ = os.Getwd()
 		attr.Env = os.Environ()
