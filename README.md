@@ -41,9 +41,10 @@ The following line editing commands are supported:
 
 Additional commands also supported:
 
-| Command                | Action                           |
-| ---------------------- | -------------------------------- |
-| cd                     | Go to system root directory      |
-| cd \<path\>            | Go to required directory         |
-| cd -                   | Go to last registered directory  |
-| echo $\<env variable\> | Print environment variable value |
+| Command                | Action                                          |
+| ---------------------- | ----------------------------------------------- |
+| cd                     | Go to system root directory                     |
+| cd \<path\>            | Go to required directory                        |
+| cd -                   | Go to last registered directory                 |
+| echo $\<env variable\> | Print environment variable value                |
+| fg                     | Bring the last background process to foreground |
