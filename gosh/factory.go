@@ -38,6 +38,8 @@ type currentLine struct {
 
 	historyPosition int
 	historyEnd      string
+
+	ctrlRSearches int
 }
 
 type process struct {

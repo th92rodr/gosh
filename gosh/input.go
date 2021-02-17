@@ -20,6 +20,8 @@ func (t *terminal) prompt() string {
 	t.historyPosition = len(t.history)
 	t.historyEnd = ""
 
+	t.ctrlRSearches = 0
+
 	t.startPrompt()
 
 	var timeout <-chan time.Time
@@ -143,6 +145,8 @@ func (t *terminal) executeEscapeKey() {
 				t.up()
 			case "down", "ctrlN":
 				t.down()
+			case "ctrlR":
+				t.ctrlR()
 
 			case "ctrlL":
 				t.ctrlL()
@@ -175,14 +179,22 @@ func isKeyStroke(char rune) bool {
 		char == CTRL_D[0] ||
 		char == CTRL_E[0] ||
 		char == CTRL_F[0] ||
+		char == CTRL_G[0] ||
 		char == CTRL_H[0] ||
 		char == CTRL_K[0] ||
 		char == CTRL_L[0] ||
 		char == CTRL_N[0] ||
+		char == CTRL_O[0] ||
 		char == CTRL_P[0] ||
+		char == CTRL_Q[0] ||
+		char == CTRL_R[0] ||
+		char == CTRL_S[0] ||
 		char == CTRL_T[0] ||
 		char == CTRL_U[0] ||
+		char == CTRL_V[0] ||
 		char == CTRL_W[0] ||
+		char == CTRL_X[0] ||
+		char == CTRL_Y[0] ||
 		char == TAB[0] ||
 		char == LINE_FEED[0] ||
 		char == CARRIAGE_RETURN[0] ||
