@@ -20,6 +20,8 @@ type terminal struct {
 	columns      int
 
 	history      stack
+	historyFilename string
+
 	currentLine
 
 	eof bool
@@ -62,7 +64,8 @@ func New() *terminal {
 	terminal.supported = isTerminalSupported()
 	terminal.eof = false
 
-	terminal.newStack()
+	terminal.historyFilename = ".history"
+	terminal.initHistory()
 
 	if terminal.supported {
 		syscall.Syscall(syscall.SYS_IOCTL, uintptr(syscall.Stdin), syscall.TCGETS, uintptr(unsafe.Pointer(&terminal.originalMode)))
@@ -110,4 +113,6 @@ func (t *terminal) close() {
 	if t.supported {
 		syscall.Syscall(syscall.SYS_IOCTL, uintptr(syscall.Stdin), syscall.TCSETS, uintptr(unsafe.Pointer(&t.originalMode)))
 	}
+
+	t.terminateHistory()
 }
