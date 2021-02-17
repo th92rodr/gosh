@@ -222,6 +222,24 @@ func (t *terminal) down() {
 	}
 }
 
+// Reverse search in history
+func (t *terminal) ctrlR() {
+	matches := find(string(t.line[:t.position]), t.history)
+
+	if len(matches) > 0 {
+		if t.ctrlRSearches >= len(matches) {
+			t.ctrlRSearches = 0
+		}
+
+		t.line = []rune(matches[t.ctrlRSearches])
+		t.ctrlRSearches++
+		t.needRefresh = true
+
+	} else {
+		doBeep()
+	}
+}
+
 ////
 
 // Clear screen

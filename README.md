@@ -34,6 +34,7 @@ The following line editing commands are supported:
 | Ctrl-C                | Reset input (create new empty prompt)               |
 | Ctrl-P, Up            | Previous command from history                       |
 | Ctrl-N, Down          | Next command from history                           |
+| Ctrl-R                | Reverse search in history                           |
 | Tab                   | Word completion                                     |
 | Winch Signal          | Window change                                       |
 
