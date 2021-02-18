@@ -9,6 +9,14 @@ import (
 )
 
 func (t *terminal) refresh() {
+	if t.isMultilineCommand {
+		t.cursorPosition(0)
+		fmt.Fprint(os.Stdout, string(t.line))
+		t.eraseLine()
+		t.cursorPosition(t.position)
+		return
+	}
+
 	t.cursorPosition(0)
 
 	fmt.Fprint(os.Stdout, promptText)

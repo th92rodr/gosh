@@ -33,6 +33,9 @@ type currentLine struct {
 	line     []rune
 	position int
 
+	isMultilineCommand bool
+	multiline [][]rune
+
 	pendingEsc []rune
 	escIsOn bool
 
