@@ -34,7 +34,7 @@ type currentLine struct {
 	position int
 
 	isMultilineCommand bool
-	multiline [][]rune
+	multiline [][]rune // Each line of the multiline command will be in a separated slice
 
 	pendingEsc []rune
 	escIsOn bool
@@ -52,6 +52,7 @@ type process struct {
 	lastExitCode int
 
 	processesInBackground int	// Number of process running in background
+	backgroundProcesses map[int]string // Commands of the background processes ran
 	fgActive bool
 	waitBackgroundProcess chan bool
 }
@@ -86,6 +87,7 @@ func New() *terminal {
 	terminal.lastExitCode = 0
 
 	terminal.processesInBackground = 0
+	terminal.backgroundProcesses = make(map[int]string)
 	terminal.fgActive = false
 	terminal.waitBackgroundProcess = make(chan bool)
 

@@ -137,6 +137,9 @@ func (t *terminal) executeInBackground(command []string, goodToGo chan<- bool) {
 			processNumber := t.processesInBackground
 			fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t%d\t", processNumber, process.Pid), strings.Join(command, " "))
 
+			// Save in a map the command of this background process for an eventual foreground need
+			t.backgroundProcesses[processNumber] = strings.Join(command, " ")
+
 			// Release the main thread to continue executing
 			goodToGo <- true
 
@@ -169,6 +172,9 @@ func (t *terminal) executeInBackground(command []string, goodToGo chan<- bool) {
 			fmt.Fprintln(os.Stdout, fmt.Sprintf("[%d]\t%d\t", processNumber, process.Pid), strings.Join(command, " "), "\tDone")
 			t.processesInBackground--
 
+			// Delete the command of this background process from the map
+			delete(t.backgroundProcesses, processNumber)
+
 			// Do not refresh the prompt if foreground is active
 			if !t.fgActive {
 				t.refresh()
@@ -192,7 +198,8 @@ func (t *terminal) executeInBackground(command []string, goodToGo chan<- bool) {
 
 func (t *terminal) foreground() {
 	if t.processesInBackground > 0 {
-		fmt.Fprintln(os.Stdout, "command")
+		// Print the command of the last background process ran
+		fmt.Fprintln(os.Stdout, t.backgroundProcesses[t.processesInBackground])
 		t.fgActive = true
 
 		// Wait for the process to finishes
