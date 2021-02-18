@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -14,6 +15,9 @@ func (t *terminal) prompt() string {
 	t.line = make([]rune, 0)
 	t.position = 0
 
+	t.isMultilineCommand = false
+	t.multiline = make([][]rune, 0)
+
 	t.pendingEsc = make([]rune, 0)
 	t.escIsOn = false
 
@@ -22,16 +26,17 @@ func (t *terminal) prompt() string {
 
 	t.ctrlRSearches = 0
 
+Restart:
 	t.startPrompt()
 
 	var timeout <-chan time.Time
 
-mainLoop:
+MainLoop:
 	for {
 		select {
 		case input, ok := <-t.nextInput:
 			if !ok || input.err != nil || input.char == ENTER {
-				break mainLoop
+				break MainLoop
 			}
 
 			char := input.char
@@ -46,7 +51,7 @@ mainLoop:
 
 			} else if isKeyStroke(char) {
 				t.pendingEsc = append(t.pendingEsc, char)
-				break mainLoop
+				break MainLoop
 
 			} else {
 				if t.position == len(t.line) && len(promptText)+len(t.line) < t.columns {
@@ -61,26 +66,34 @@ mainLoop:
 			}
 
 		case <-timeout:
-			break mainLoop
+			break MainLoop
 
 		case <-t.winch:
 			t.getColumns()
-			break mainLoop
+			break MainLoop
 
 		case <-t.sigint:
 			t.pendingEsc = append(t.pendingEsc, CTRL_C[0])
-			break mainLoop
+			break MainLoop
 		}
 	}
 
 	if len(t.pendingEsc) > 0 {
 		t.executeEscapeKey()
 		if !t.eof {
-			goto mainLoop
+			goto MainLoop
 		}
 	}
 
 	if len(t.line) > 0 {
+		if t.isMultiline() {
+			goto Restart
+		}
+
+		if t.isMultilineCommand {
+			t.concatenateLines()
+		}
+
 		t.push(string(t.line))
 		return string(t.line)
 	}
@@ -199,4 +212,41 @@ func isKeyStroke(char rune) bool {
 		char == LINE_FEED[0] ||
 		char == CARRIAGE_RETURN[0] ||
 		char == BACKSPACE[0]
+}
+
+func (t *terminal) isMultiline() bool {
+	if ok, input := endWithSlash(string(t.line)); ok {
+		t.isMultilineCommand = true
+
+		t.multiline = append(t.multiline, []rune(input))
+		fmt.Fprintln(os.Stdout, "")
+
+		t.line = t.line[:0]
+		t.position = 0
+
+		t.refresh()
+		return true
+	}
+
+	return false
+}
+
+func endWithSlash(input string) (bool, string) {
+	input = strings.TrimRight(input, " ")
+
+	if strings.HasSuffix(input, "\\") {
+		return true, strings.TrimSuffix(input, "\\")
+	}
+
+	return false, input
+}
+
+func (t *terminal) concatenateLines() {
+	fullLine := make([]rune, 0)
+	for _, line := range t.multiline {
+		fullLine = append(fullLine, line...)
+	}
+	fullLine = append(fullLine, t.line...)
+
+	t.line = fullLine
 }
